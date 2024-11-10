@@ -2,17 +2,24 @@
 $urlBase = "https://joanpardogine.github.io/fitxers-smx2/"
 $destinacioBase = "C:\SMX-Alumnes"
 $desktopPath = [System.Environment]::GetFolderPath("Desktop")
-$scriptPath = "$desktopPath\controlSMX.ps1"
+$scriptPath = "$destinacioBase\controlSMX.ps1"
 
 # Crea la carpeta de destí si no existeix
 if (!(Test-Path -Path $destinacioBase)) {
     New-Item -ItemType Directory -Path $destinacioBase
 }
 
-# Col·loca l'script a l'escriptori de l'alumne si no hi és
-if (!(Test-Path -Path $scriptPath)) {
-    Copy-Item -Path $MyInvocation.MyCommand.Path -Destination $scriptPath -Force
-    Write-Output "L'script s'ha col·locat a l'escriptori per a futures execucions."
+# Col·loca l'accés directe de l'script a l'escriptori
+$shortcutPath = "$desktopPath\controlSMX.lnk"
+if (!(Test-Path -Path $shortcutPath)) {
+    $wshell = New-Object -ComObject WScript.Shell
+    $shortcut = $wshell.CreateShortcut($shortcutPath)
+    $shortcut.TargetPath = $scriptPath
+    $shortcut.WorkingDirectory = $destinacioBase
+    $shortcut.WindowStyle = 1
+    $shortcut.Description = "Executa el script controlSMX"
+    $shortcut.Save()
+    Write-Output "S'ha creat un accés directe a l'escriptori per l'script controlSMX."
 }
 
 # Descarrega un fitxer des de l'URL i el guarda en una ubicació local
