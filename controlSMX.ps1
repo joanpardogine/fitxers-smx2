@@ -11,7 +11,7 @@ $destinacioBase = "C:\SMX-Alumnes"
 $desktopPath = [System.Environment]::GetFolderPath("Desktop")
 $scriptPath = "$destinacioBase\controlSMX.ps1"
 
-# Crea l'accés directe de l'script a l'escriptori si no existeix
+# Crea un accés directe a l'script a l'escriptori si no existeix
 $shortcutPath = "$desktopPath\controlSMX.lnk"
 if (!(Test-Path -Path $shortcutPath)) {
     $wshell = New-Object -ComObject WScript.Shell
@@ -33,11 +33,10 @@ if (!(Test-Path -Path "$destinacioBase\Registres")) {
     New-Item -ItemType Directory -Path "$destinacioBase\Registres"
 }
 
-# Si el fitxer config.txt existeix, mostra el missatge de notificació
+# Si el fitxer config.txt existeix, mostra el missatge de notificació i surt
 if (Test-Path $configFile) {
     $config = Get-Content $configFile -Raw
-    Write-Output "Hola, $config! Ja has estat registrat prèviament."
-    [System.Windows.Forms.MessageBox]::Show("Hola, $config! Ja has executat aquest script prèviament.", "Atenció", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+    Write-Output "Hola, $config! Ja has executat aquest script prèviament."
     exit
 }
 
@@ -61,6 +60,7 @@ $alumneSeleccionat = $nomsAlumnes[$index - 1]
 
 # Guarda el nom de l'alumne al fitxer config.txt per controlar l'execució
 Set-Content -Path $configFile -Value "$($alumneSeleccionat.'Nom alumne') $($alumneSeleccionat.'Cognom alumne')"
+Write-Output "Benvingut, $($alumneSeleccionat.'Nom alumne') $($alumneSeleccionat.'Cognom alumne')! La teva configuració s'ha registrat correctament."
 
 # Crea estructura de carpetes per l'alumne
 $carpetaAlumne = "$destinacioBase\Alumnes\$($alumneSeleccionat.'Nom carpeta')"
@@ -87,3 +87,4 @@ if (!(Test-Path -Path $bgInfoConfig)) {
 
 # Executa Bginfo amb la configuració especificada
 Start-Process -FilePath $bgInfoExe -ArgumentList "$bgInfoConfig /timer:0" -NoNewWindow
+Write-Output "Bginfo s'ha executat correctament amb la configuració especificada."
