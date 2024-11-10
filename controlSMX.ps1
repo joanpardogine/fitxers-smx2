@@ -1,15 +1,17 @@
-# Defineix la URL base per descarregar fitxers
+# Detecta si l'script s'està executant en mode de consola
+if (-not $Host.UI.RawUI) {
+    # Rellança l'script en mode de consola visible
+    Start-Process powershell -ArgumentList "-NoExit", "-File `"$PSCommandPath`""
+    exit
+}
+
+# Defineix la URL base per descarregar fitxers i la ubicació del fitxer de configuració
 $urlBase = "https://joanpardogine.github.io/fitxers-smx2/"
 $destinacioBase = "C:\SMX-Alumnes"
 $desktopPath = [System.Environment]::GetFolderPath("Desktop")
 $scriptPath = "$destinacioBase\controlSMX.ps1"
 
-# Crea la carpeta de destí si no existeix
-if (!(Test-Path -Path $destinacioBase)) {
-    New-Item -ItemType Directory -Path $destinacioBase
-}
-
-# Col·loca l'accés directe de l'script a l'escriptori
+# Crea l'accés directe de l'script a l'escriptori si no existeix
 $shortcutPath = "$desktopPath\controlSMX.lnk"
 if (!(Test-Path -Path $shortcutPath)) {
     $wshell = New-Object -ComObject WScript.Shell
@@ -22,27 +24,7 @@ if (!(Test-Path -Path $shortcutPath)) {
     Write-Output "S'ha creat un accés directe a l'escriptori per l'script controlSMX."
 }
 
-# Descarrega un fitxer des de l'URL i el guarda en una ubicació local
-function Descarregar-Fitxer {
-    param (
-        [string]$nomFitxer
-    )
-    $urlFitxer = "$urlBase$nomFitxer"
-    $destinacioFitxer = Join-Path -Path $destinacioBase -ChildPath $nomFitxer
-    try {
-        Invoke-WebRequest -Uri $urlFitxer -OutFile $destinacioFitxer -ErrorAction Stop
-        Write-Output "S'ha descarregat el fitxer $nomFitxer a $destinacioFitxer"
-    } catch {
-        Write-Output "Error: No s'ha pogut descarregar el fitxer $nomFitxer de $urlFitxer"
-    }
-}
-
-# Descarrega els fitxers necessaris
-Descarregar-Fitxer -nomFitxer "nomsAlumnes.txt"
-Descarregar-Fitxer -nomFitxer "Bginfo64.exe"
-Descarregar-Fitxer -nomFitxer "smx2.bgi"
-
-# Defineix els fitxers i carpetes necessaris
+# Defineix els fitxers necessaris i la carpeta de registres
 $configFile = "$destinacioBase\Registres\config.txt"
 $logFile = "$destinacioBase\Registres\log.txt"
 
@@ -51,7 +33,7 @@ if (!(Test-Path -Path "$destinacioBase\Registres")) {
     New-Item -ItemType Directory -Path "$destinacioBase\Registres"
 }
 
-# Si el fitxer config.txt existeix, mostra un missatge de notificació
+# Si el fitxer config.txt existeix, mostra el missatge de notificació
 if (Test-Path $configFile) {
     $config = Get-Content $configFile -Raw
     Write-Output "Hola, $config! Ja has estat registrat prèviament."
@@ -59,56 +41,49 @@ if (Test-Path $configFile) {
     exit
 }
 
-# Carrega els alumnes des de nomsAlumnes.txt
-function Carregar-Alumnes {
-    $fitxerAlumnes = "$destinacioBase\nomsAlumnes.txt"
-    if (Test-Path -Path $fitxerAlumnes) {
-        Import-Csv -Path $fitxerAlumnes -Delimiter ',' | ForEach-Object {
-            [PSCustomObject]@{
-                Id = $_.Id
-                Nom = $_."Nom alumne"
-                Cognom = $_."Cognom alumne"
-                Carpeta = $_."Nom carpeta"
-            }
-        }
-    } else {
-        Write-Output "Error: El fitxer nomsAlumnes.txt no existeix a $fitxerAlumnes."
-    }
+# Descarrega el fitxer nomsAlumnes.txt
+$nomsAlumnesFile = "$destinacioBase\nomsAlumnes.txt"
+if (!(Test-Path -Path $nomsAlumnesFile)) {
+    $urlFitxer = "$urlBase/nomsAlumnes.txt"
+    Invoke-WebRequest -Uri $urlFitxer -OutFile $nomsAlumnesFile -ErrorAction Stop
+    Write-Output "S'ha descarregat el fitxer nomsAlumnes.txt a $nomsAlumnesFile"
 }
 
-# Selecció de l'alumne i creació de la carpeta
-$alumnes = Carregar-Alumnes
-if ($alumnes) {
-    Write-Output "Selecciona el teu nom d'entre els següents alumnes:"
-    $i = 1
-    $alumnes | ForEach-Object {
-        Write-Output "$i. $($_.Nom) $($_.Cognom)"
-        $i++
-    }
-
-    $seleccio = Read-Host "Introdueix el número corresponent al teu nom"
-    $alumneSeleccionat = $alumnes[$seleccio - 1]
-
-    Set-Content -Path $configFile -Value "$($alumneSeleccionat.Nom) $($alumneSeleccionat.Cognom)"
-
-    $carpetaAlumne = "$destinacioBase\Alumnes\$($alumneSeleccionat.Carpeta)"
-    if (!(Test-Path -Path $carpetaAlumne)) {
-        New-Item -ItemType Directory -Path "$carpetaAlumne\Documents"
-        New-Item -ItemType Directory -Path "$carpetaAlumne\Activitats"
-        New-Item -ItemType Directory -Path "$carpetaAlumne\Registres"
-        Write-Output "S'ha creat l'estructura de carpetes per a $($alumneSeleccionat.Nom) $($alumneSeleccionat.Cognom)"
-    }
-
-    $dataExecucio = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    Add-Content -Path $logFile -Value "[$dataExecucio] - Primera execució per $($alumneSeleccionat.Nom) $($alumneSeleccionat.Cognom)"
+# Mostra la llista d'alumnes i permet que l'usuari seleccioni el seu nom
+$nomsAlumnes = Import-Csv -Path $nomsAlumnesFile -Delimiter ','
+Write-Output "Selecciona el teu nom d'entre els següents alumnes:"
+for ($i = 0; $i -lt $nomsAlumnes.Count; $i++) {
+    Write-Output "$($i + 1) - $($nomsAlumnes[$i].'Nom alumne') $($nomsAlumnes[$i].'Cognom alumne')"
 }
 
-# Executa Bginfo amb la configuració smx2.bgi
-$bginfoPath = Join-Path -Path $destinacioBase -ChildPath "Bginfo64.exe"
-$configPath = Join-Path -Path $destinacioBase -ChildPath "smx2.bgi"
-Start-Process -FilePath $bginfoPath -ArgumentList "$configPath /timer:0" -NoNewWindow
+$index = Read-Host "Introdueix el número corresponent al teu nom"
+$alumneSeleccionat = $nomsAlumnes[$index - 1]
 
-$dataExecucio = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-Add-Content -Path $logFile -Value "[$dataExecucio] - Execució de l'script per $config"
+# Guarda el nom de l'alumne al fitxer config.txt per controlar l'execució
+Set-Content -Path $configFile -Value "$($alumneSeleccionat.'Nom alumne') $($alumneSeleccionat.'Cognom alumne')"
 
-Write-Output "Execució registrada correctament."
+# Crea estructura de carpetes per l'alumne
+$carpetaAlumne = "$destinacioBase\Alumnes\$($alumneSeleccionat.'Nom carpeta')"
+if (!(Test-Path -Path $carpetaAlumne)) {
+    New-Item -ItemType Directory -Path $carpetaAlumne
+    Write-Output "S'ha creat la carpeta per l'alumne a $carpetaAlumne"
+}
+
+# Registra l'execució al fitxer log.txt
+Add-Content -Path $logFile -Value "$(Get-Date): Script executat per $($alumneSeleccionat.'Nom alumne') $($alumneSeleccionat.'Cognom alumne')"
+
+# Descarrega i executa Bginfo64.exe amb el fitxer de configuració
+$bgInfoExe = "$destinacioBase\Bginfo64.exe"
+$bgInfoConfig = "$destinacioBase\smx2.bgi"
+
+if (!(Test-Path -Path $bgInfoExe)) {
+    Invoke-WebRequest -Uri "$urlBase/Bginfo64.exe" -OutFile $bgInfoExe -ErrorAction Stop
+    Write-Output "S'ha descarregat el fitxer Bginfo64.exe"
+}
+if (!(Test-Path -Path $bgInfoConfig)) {
+    Invoke-WebRequest -Uri "$urlBase/smx2.bgi" -OutFile $bgInfoConfig -ErrorAction Stop
+    Write-Output "S'ha descarregat el fitxer smx2.bgi"
+}
+
+# Executa Bginfo amb la configuració especificada
+Start-Process -FilePath $bgInfoExe -ArgumentList "$bgInfoConfig /timer:0" -NoNewWindow
