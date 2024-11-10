@@ -37,6 +37,7 @@ if (!(Test-Path -Path "$destinacioBase\Registres")) {
 if (Test-Path $configFile) {
     $config = Get-Content $configFile -Raw
     Write-Output "Hola, $config! Ja has executat aquest script prèviament."
+    Read-Host "Prem qualsevol tecla per sortir..."
     exit
 }
 
@@ -88,3 +89,6 @@ if (!(Test-Path -Path $bgInfoConfig)) {
 # Executa Bginfo amb la configuració especificada
 Start-Process -FilePath $bgInfoExe -ArgumentList "$bgInfoConfig /timer:0" -NoNewWindow
 Write-Output "Bginfo s'ha executat correctament amb la configuració especificada."
+
+# Espera que l'usuari premi una tecla abans de tancar la finestra de consola
+Read-Host "Prem qualsevol tecla per sortir..."
