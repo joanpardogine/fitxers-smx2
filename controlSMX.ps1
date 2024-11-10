@@ -14,12 +14,18 @@ function Descarregar-Fitxer {
     )
     $urlFitxer = "$urlBase$nomFitxer"
     $destinacioFitxer = Join-Path -Path $destinacioBase -ChildPath $nomFitxer
-    Invoke-WebRequest -Uri $urlFitxer -OutFile $destinacioFitxer -ErrorAction Stop
-    Write-Output "S'ha descarregat el fitxer $nomFitxer a $destinacioFitxer"
+    try {
+        Invoke-WebRequest -Uri $urlFitxer -OutFile $destinacioFitxer -ErrorAction Stop
+        Write-Output "S'ha descarregat el fitxer $nomFitxer a $destinacioFitxer"
+    } catch {
+        Write-Output "Error: No s'ha pogut descarregar el fitxer $nomFitxer de $urlFitxer"
+    }
 }
 
-# Descarrega el fitxer nomsAlumnes.txt
+# Descarrega els fitxers necessaris
 Descarregar-Fitxer -nomFitxer "nomsAlumnes.txt"
+Descarregar-Fitxer -nomFitxer "Bginfo64.exe"
+Descarregar-Fitxer -nomFitxer "smx2.bgi"
 
 # Defineix els fitxers i carpetes necessaris
 $configFile = "$destinacioBase\Registres\config.txt"
@@ -30,59 +36,61 @@ if (!(Test-Path -Path "$destinacioBase\Registres")) {
     New-Item -ItemType Directory -Path "$destinacioBase\Registres"
 }
 
-# Funció per carregar els alumnes des de nomsAlumnes.txt
+# Carrega els alumnes des de nomsAlumnes.txt
 function Carregar-Alumnes {
-    Import-Csv -Path "$destinacioBase\nomsAlumnes.txt" -Delimiter ',' | ForEach-Object {
-        [PSCustomObject]@{
-            Id = $_.Id
-            Nom = $_."Nom alumne"
-            Cognom = $_."Cognom alumne"
-            Carpeta = $_."Nom carpeta"
+    $fitxerAlumnes = "$destinacioBase\nomsAlumnes.txt"
+    if (Test-Path -Path $fitxerAlumnes) {
+        Import-Csv -Path $fitxerAlumnes -Delimiter ',' | ForEach-Object {
+            [PSCustomObject]@{
+                Id = $_.Id
+                Nom = $_."Nom alumne"
+                Cognom = $_."Cognom alumne"
+                Carpeta = $_."Nom carpeta"
+            }
         }
+    } else {
+        Write-Output "Error: El fitxer nomsAlumnes.txt no existeix a $fitxerAlumnes."
     }
 }
 
 # Comprova si l'alumne ja ha estat seleccionat
 if (Test-Path $configFile) {
-    # Recupera l'alumne seleccionat anteriorment
     $config = Get-Content $configFile -Raw
     Write-Output "Hola, $config! Ja has estat registrat prèviament."
 } else {
-    # Mostra el llistat d'alumnes per a la selecció
     $alumnes = Carregar-Alumnes
-    Write-Output "Selecciona el teu nom d'entre els següents alumnes:"
-    $i = 1
-    $alumnes | ForEach-Object {
-        Write-Output "$i. $($_.Nom) $($_.Cognom)"
-        $i++
+    if ($alumnes) {
+        Write-Output "Selecciona el teu nom d'entre els següents alumnes:"
+        $i = 1
+        $alumnes | ForEach-Object {
+            Write-Output "$i. $($_.Nom) $($_.Cognom)"
+            $i++
+        }
+
+        $seleccio = Read-Host "Introdueix el número corresponent al teu nom"
+        $alumneSeleccionat = $alumnes[$seleccio - 1]
+
+        Set-Content -Path $configFile -Value "$($alumneSeleccionat.Nom) $($alumneSeleccionat.Cognom)"
+
+        $carpetaAlumne = "$destinacioBase\Alumnes\$($alumneSeleccionat.Carpeta)"
+        if (!(Test-Path -Path $carpetaAlumne)) {
+            New-Item -ItemType Directory -Path "$carpetaAlumne\Documents"
+            New-Item -ItemType Directory -Path "$carpetaAlumne\Activitats"
+            New-Item -ItemType Directory -Path "$carpetaAlumne\Registres"
+            Write-Output "S'ha creat l'estructura de carpetes per a $($alumneSeleccionat.Nom) $($alumneSeleccionat.Cognom)"
+        }
+
+        $dataExecucio = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        Add-Content -Path $logFile -Value "[$dataExecucio] - Primera execució per $($alumneSeleccionat.Nom) $($alumneSeleccionat.Cognom)"
     }
-
-    # Llegeix la selecció d'alumne
-    $seleccio = Read-Host "Introdueix el número corresponent al teu nom"
-    $alumneSeleccionat = $alumnes[$seleccio - 1]
-
-    # Guarda el nom de l'alumne a config.txt
-    Set-Content -Path $configFile -Value "$($alumneSeleccionat.Nom) $($alumneSeleccionat.Cognom)"
-
-    # Crea l'estructura de carpetes personalitzada
-    $carpetaAlumne = "$destinacioBase\Alumnes\$($alumneSeleccionat.Carpeta)"
-    if (!(Test-Path -Path $carpetaAlumne)) {
-        New-Item -ItemType Directory -Path "$carpetaAlumne\Documents"
-        New-Item -ItemType Directory -Path "$carpetaAlumne\Activitats"
-        New-Item -ItemType Directory -Path "$carpetaAlumne\Registres"
-        Write-Output "S'ha creat l'estructura de carpetes per a $($alumneSeleccionat.Nom) $($alumneSeleccionat.Cognom)"
-    }
-
-    # Registra la primera execució
-    $dataExecucio = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    Add-Content -Path $logFile -Value "[$dataExecucio] - Primera execució per $($alumneSeleccionat.Nom) $($alumneSeleccionat.Cognom)"
 }
 
-# Registra la data i hora de l'execució
+# Executa Bginfo amb la configuració smx2.bgi
+$bginfoPath = Join-Path -Path $destinacioBase -ChildPath "Bginfo64.exe"
+$configPath = Join-Path -Path $destinacioBase -ChildPath "smx2.bgi"
+Start-Process -FilePath $bginfoPath -ArgumentList "$configPath /timer:0" -NoNewWindow
+
 $dataExecucio = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 Add-Content -Path $logFile -Value "[$dataExecucio] - Execució de l'script per $config"
 
 Write-Output "Execució registrada correctament."
-
-
-
