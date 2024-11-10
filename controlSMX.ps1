@@ -1,16 +1,38 @@
-# Llegeix el fitxer nomsAlumnes.txt i carrega els alumnes
-$alumnesFile = "nomsAlumnes.txt"
-$configFile = "Registres/config.txt"
-$logFile = "Registres/log.txt"
+# Defineix la URL base per descarregar fitxers
+$urlBase = "https://joanpardogine.github.io/fitxers-smx2/"
+$destinacioBase = "C:\SMX-Alumnes"
 
-# Crea la carpeta de registres si no existeix
-if (!(Test-Path -Path "Registres")) {
-    New-Item -ItemType Directory -Path "Registres"
+# Crea la carpeta de destí si no existeix
+if (!(Test-Path -Path $destinacioBase)) {
+    New-Item -ItemType Directory -Path $destinacioBase
 }
 
-# Funció per carregar els alumnes
+# Descarrega un fitxer des de l'URL i el guarda en una ubicació local
+function Descarregar-Fitxer {
+    param (
+        [string]$nomFitxer
+    )
+    $urlFitxer = "$urlBase$nomFitxer"
+    $destinacioFitxer = Join-Path -Path $destinacioBase -ChildPath $nomFitxer
+    Invoke-WebRequest -Uri $urlFitxer -OutFile $destinacioFitxer -ErrorAction Stop
+    Write-Output "S'ha descarregat el fitxer $nomFitxer a $destinacioFitxer"
+}
+
+# Descarrega el fitxer nomsAlumnes.txt
+Descarregar-Fitxer -nomFitxer "nomsAlumnes.txt"
+
+# Defineix els fitxers i carpetes necessaris
+$configFile = "$destinacioBase\Registres\config.txt"
+$logFile = "$destinacioBase\Registres\log.txt"
+
+# Crea la carpeta de registres si no existeix
+if (!(Test-Path -Path "$destinacioBase\Registres")) {
+    New-Item -ItemType Directory -Path "$destinacioBase\Registres"
+}
+
+# Funció per carregar els alumnes des de nomsAlumnes.txt
 function Carregar-Alumnes {
-    Import-Csv -Path $alumnesFile -Delimiter ',' | ForEach-Object {
+    Import-Csv -Path "$destinacioBase\nomsAlumnes.txt" -Delimiter ',' | ForEach-Object {
         [PSCustomObject]@{
             Id = $_.Id
             Nom = $_."Nom alumne"
@@ -22,11 +44,11 @@ function Carregar-Alumnes {
 
 # Comprova si l'alumne ja ha estat seleccionat
 if (Test-Path $configFile) {
-    # Si l'alumne ja està guardat, el recupera
+    # Recupera l'alumne seleccionat anteriorment
     $config = Get-Content $configFile -Raw
     Write-Output "Hola, $config! Ja has estat registrat prèviament."
 } else {
-    # Mostra el llistat d'alumnes
+    # Mostra el llistat d'alumnes per a la selecció
     $alumnes = Carregar-Alumnes
     Write-Output "Selecciona el teu nom d'entre els següents alumnes:"
     $i = 1
@@ -35,15 +57,15 @@ if (Test-Path $configFile) {
         $i++
     }
 
-    # Llegeix la selecció de l'alumne
+    # Llegeix la selecció d'alumne
     $seleccio = Read-Host "Introdueix el número corresponent al teu nom"
     $alumneSeleccionat = $alumnes[$seleccio - 1]
 
-    # Guarda el nom de l'alumne al fitxer de configuració
+    # Guarda el nom de l'alumne a config.txt
     Set-Content -Path $configFile -Value "$($alumneSeleccionat.Nom) $($alumneSeleccionat.Cognom)"
 
-    # Crea l'estructura de carpetes
-    $carpetaAlumne = "Alumnes\$($alumneSeleccionat.Carpeta)"
+    # Crea l'estructura de carpetes personalitzada
+    $carpetaAlumne = "$destinacioBase\Alumnes\$($alumneSeleccionat.Carpeta)"
     if (!(Test-Path -Path $carpetaAlumne)) {
         New-Item -ItemType Directory -Path "$carpetaAlumne\Documents"
         New-Item -ItemType Directory -Path "$carpetaAlumne\Activitats"
@@ -51,7 +73,7 @@ if (Test-Path $configFile) {
         Write-Output "S'ha creat l'estructura de carpetes per a $($alumneSeleccionat.Nom) $($alumneSeleccionat.Cognom)"
     }
 
-    # Registra l'execució al fitxer de log
+    # Registra la primera execució
     $dataExecucio = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     Add-Content -Path $logFile -Value "[$dataExecucio] - Primera execució per $($alumneSeleccionat.Nom) $($alumneSeleccionat.Cognom)"
 }
