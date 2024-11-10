@@ -83,3 +83,6 @@ $dataExecucio = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 Add-Content -Path $logFile -Value "[$dataExecucio] - Execució de l'script per $config"
 
 Write-Output "Execució registrada correctament."
+
+
+
