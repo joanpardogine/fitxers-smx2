@@ -3,8 +3,8 @@ function AfegirMissatgeAlFitxer {
         [string]$nomFitxer,
         [string]$missatgeRebut
     )
-
-    Add-Content -Path $nomFitxer -Value $missatgeRebut
+    $dataExecucio = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    Add-Content -Path $nomFitxer -Value "$dataExecucio: $missatgeRebut"
 }
 
 # Detecta si l'script s'està executant en mode de consola
@@ -86,11 +86,7 @@ Write-Output "$logFile = {$logFile}"
 Write-Output "$alumneSeleccionat = {$alumneSeleccionat}"
 Write-Output "$cadena = {$cadena}"
 
-$missatge = "Aquest és el missatge que vull afegir al fitxer."
-
 AfegirMissatgeAlFitxer -nomFitxer $logFile -missatge $missatge
-
-
 
 # Descarrega i executa Bginfo64.exe amb el fitxer de configuració
 $bgInfoExe = "$destinacioBase\Bginfo64.exe"
