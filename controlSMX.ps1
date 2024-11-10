@@ -1,17 +1,10 @@
-function AfegirALog {
+function AfegirMissatgeAlFitxer {
     param (
-        [string]$logFile,
-        [string]$textAAfegir
+        [string]$nomFitxer,
+        [string]$missatgeRebut
     )
 
-    $missatge = "$(Get-Date): $(textAAfegir)"
-    # Registra l'execució al fitxer log.txt
-    Add-Content -Path $logFile -Value $missatge
-
-
-    # $data = Get-Date
-    #$missatge = "$data: Script executat per $($alumneSeleccionat.'Nom alumne') $($alumneSeleccionat.'Cognom alumne')"
-    # Add-Content -Path $logFile -Value $missatge
+    Add-Content -Path $nomFitxer -Value $missatgeRebut
 }
 
 # Detecta si l'script s'està executant en mode de consola
@@ -87,13 +80,17 @@ if (!(Test-Path -Path $carpetaAlumne)) {
 }
 
 
-$cadena = $"Script executat per $($alumneSeleccionat.'Nom alumne') $($alumneSeleccionat.'Cognom alumne')"
+$missatge = $"Script executat per $($alumneSeleccionat.'Nom alumne') $($alumneSeleccionat.'Cognom alumne')"
 
 Write-Output "$logFile = {$logFile}"
 Write-Output "$alumneSeleccionat = {$alumneSeleccionat}"
 Write-Output "$cadena = {$cadena}"
 
-AfegirALog -logFile $logFile -textAAfegir $cadena
+$missatge = "Aquest és el missatge que vull afegir al fitxer."
+
+AfegirMissatgeAlFitxer -nomFitxer $logFile -missatge $missatge
+
+
 
 # Descarrega i executa Bginfo64.exe amb el fitxer de configuració
 $bgInfoExe = "$destinacioBase\Bginfo64.exe"
