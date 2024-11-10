@@ -67,12 +67,12 @@ if (!(Test-Path -Path $nomsAlumnesFile)) {
 
 # Mostra la llista d'alumnes i permet que l'usuari seleccioni el seu nom
 $nomsAlumnes = Import-Csv -Path $nomsAlumnesFile -Delimiter ','
-Write-Output "Selecciona el teu nom d'entre els següents alumnes:"
+Write-Output "Selecciona el teu nom d'entre els següents alumnes"
 for ($i = 0; $i -lt $nomsAlumnes.Count; $i++) {
     Write-Output "$($i + 1) - $($nomsAlumnes[$i].'Nom alumne') $($nomsAlumnes[$i].'Cognom alumne')"
 }
 
-$index = Read-Host "Introdueix el número corresponent al teu nom"
+$index = Read-Host "Introdueix el número corresponent al teu nom: "
 $alumneSeleccionat = $nomsAlumnes[$index - 1]
 
 # Guarda el nom de l'alumne al fitxer config.txt per controlar l'execució
@@ -86,7 +86,14 @@ if (!(Test-Path -Path $carpetaAlumne)) {
     Write-Output "S'ha creat la carpeta per l'alumne a $carpetaAlumne"
 }
 
-AfegirALog -logFile $logFile -textAAfegir $"Script executat per $($alumneSeleccionat.'Nom alumne') $($alumneSeleccionat.'Cognom alumne')"
+
+$cadena = $"Script executat per $($alumneSeleccionat.'Nom alumne') $($alumneSeleccionat.'Cognom alumne')"
+
+Write-Output "$logFile = {$logFile}"
+Write-Output "$alumneSeleccionat = {$alumneSeleccionat}"
+Write-Output "$cadena = {$cadena}"
+
+AfegirALog -logFile $logFile -textAAfegir $cadena
 
 # Descarrega i executa Bginfo64.exe amb el fitxer de configuració
 $bgInfoExe = "$destinacioBase\Bginfo64.exe"
