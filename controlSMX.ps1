@@ -4,7 +4,7 @@ function AfegirMissatgeAlFitxer {
         [string]$missatgeRebut
     )
     $dataExecucio = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    Add-Content -Path $nomFitxer -Value "$dataExecucio: $missatgeRebut"
+    Add-Content -Path $nomFitxer -Value "$dataExecucio : $missatgeRebut"
 }
 
 # Detecta si l'script s'està executant en mode de consola
@@ -21,17 +21,17 @@ $desktopPath = [System.Environment]::GetFolderPath("Desktop")
 $scriptPath = "$destinacioBase\controlSMX.ps1"
 
 # Crea un accés directe a l'script a l'escriptori si no existeix
-$shortcutPath = "$desktopPath\controlSMX.lnk"
-if (!(Test-Path -Path $shortcutPath)) {
-    $wshell = New-Object -ComObject WScript.Shell
-    $shortcut = $wshell.CreateShortcut($shortcutPath)
-    $shortcut.TargetPath = $scriptPath
-    $shortcut.WorkingDirectory = $destinacioBase
-    $shortcut.WindowStyle = 1
-    $shortcut.Description = "Executa el script controlSMX"
-    $shortcut.Save()
-    Write-Output "S'ha creat un accés directe a l'escriptori per l'script controlSMX."
-}
+# $shortcutPath = "$desktopPath\controlSMX.lnk"
+# if (!(Test-Path -Path $shortcutPath)) {
+#     $wshell = New-Object -ComObject WScript.Shell
+#     $shortcut = $wshell.CreateShortcut($shortcutPath)
+#     $shortcut.TargetPath = $scriptPath
+#     $shortcut.WorkingDirectory = $destinacioBase
+#     $shortcut.WindowStyle = 1
+#     $shortcut.Description = "Executa el script controlSMX"
+#     $shortcut.Save()
+#     Write-Output "S'ha creat un accés directe a l'escriptori per l'script controlSMX."
+# }
 
 # Defineix els fitxers necessaris i la carpeta de registres
 $configFile = "$destinacioBase\Registres\config.txt"
@@ -62,15 +62,15 @@ if (!(Test-Path -Path $nomsAlumnesFile)) {
 $nomsAlumnes = Import-Csv -Path $nomsAlumnesFile -Delimiter ','
 Write-Output "Selecciona el teu nom d'entre els següents alumnes"
 for ($i = 0; $i -lt $nomsAlumnes.Count; $i++) {
-    Write-Output "$($i + 1) - $($nomsAlumnes[$i].'Nom alumne') $($nomsAlumnes[$i].'Cognom alumne')"
+    Write-Output "$($i + 1) - $($nomsAlumnes[$i].'NomAlumne') $($nomsAlumnes[$i].'CognomAlumne')"
 }
 
 $index = Read-Host "Introdueix el número corresponent al teu nom: "
 $alumneSeleccionat = $nomsAlumnes[$index - 1]
 
 # Guarda el nom de l'alumne al fitxer config.txt per controlar l'execució
-Set-Content -Path $configFile -Value "$($alumneSeleccionat.'Nom alumne') $($alumneSeleccionat.'Cognom alumne')"
-Write-Output "Benvingut, $($alumneSeleccionat.'Nom alumne') $($alumneSeleccionat.'Cognom alumne')! La teva configuració s'ha registrat correctament."
+Set-Content -Path $configFile -Value "$($alumneSeleccionat.'NomAlumne') $($alumneSeleccionat.'CognomAlumne')"
+Write-Output "Benvingut, $($alumneSeleccionat.'NomAlumne') $($alumneSeleccionat.'CognomAlumne')! La teva configuració s'ha registrat correctament."
 
 # Crea estructura de carpetes per l'alumne
 $carpetaAlumne = "$destinacioBase\Alumnes\$($alumneSeleccionat.'Nom carpeta')"
@@ -80,7 +80,7 @@ if (!(Test-Path -Path $carpetaAlumne)) {
 }
 
 
-$missatge = $"Script executat per $($alumneSeleccionat.'Nom alumne') $($alumneSeleccionat.'Cognom alumne')"
+$missatge = $"Script executat per $($alumneSeleccionat.'NomAlumne') $($alumneSeleccionat.'CognomAlumne')"
 
 Write-Output "$logFile = {$logFile}"
 Write-Output "$alumneSeleccionat = {$alumneSeleccionat}"

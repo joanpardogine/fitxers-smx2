@@ -1,4 +1,4 @@
-Id,Nom alumne,Cognom alumne,Nom carpeta
+Id,NomAlumne,CognomAlumne,NomCarpeta
 7696,Dídac,Ballesteros,ballesteros
 8054,Joel,Castillo,castillo
 7989,Oscar,Cortes,cortes
