@@ -1,0 +1,22 @@
+
+Registres tipus A
+mariaexposito
+marclurbe
+ivannieto
+salvaquadrades
+vladibellavista
+joanpardo
+secretaria
+ed-primaria
+ed-ebc
+Registres tipus CNAME
+alumne
+director-pedagogic
+cap-estudis
+resp-cicles-informatica
+tutor-smx1
+tutor-smx2
+profe-sxa
+profe-sxa-2
+Registres tipus MX
+correu
